@@ -17,7 +17,12 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
       - name: Build Scripts
         run: shellcheck build-*.sh
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v2
       - name: Run Scripts
         run: |
-          ./build-all.sh
+          ./build-all-multiplatform.sh
           ./build-tool-images.sh latest
