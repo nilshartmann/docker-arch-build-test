@@ -7,7 +7,7 @@ if [ -z "$DEBEZIUM_VERSIONS" ]; then
   DEBEZIUM_VERSIONS="$DEBEZIUM_VERSION"
 fi
 
-COMPONENTS=$@
+COMPONENTS=$*
 if [ -z "$COMPONENTS" ]; then
   COMPONENTS="mongo postgres debezium"
 fi;
