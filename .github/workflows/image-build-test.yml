@@ -3,10 +3,7 @@ on:
   push:
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        component: [ 'mongo', 'postgres', 'debezium' ]
+  setup-env:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,9 +20,16 @@ jobs:
         with:
           driver-opts: |
             network=host
+  build:
+    needs: [setup-env]
+    strategy:
+      matrix:
+        component: [ 'mongo', 'postgres', 'debezium' ]
+    runs-on: ubuntu-latest
+    steps:
       - name: Run Scripts
         run: |
-          ./build-all-multiplatform.sh ${matrix.component}
+          ./build-all-multiplatform.sh ${{ matrix.component}}
 #          ./build-tool-images.sh latest
         env:
           DEBEZIUM_DOCKER_REGISTRY_PRIMARY_NAME: localhost:5500/debezium
