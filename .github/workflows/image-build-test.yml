@@ -1,11 +1,13 @@
 name: Build Container Images as Anonymous
 on:
-  pull_request:
+  push:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        component: [ 'mongo', 'postgres', 'debezium' ]
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -23,8 +25,8 @@ jobs:
             network=host
       - name: Run Scripts
         run: |
-          ./build-all-multiplatform.sh
-          ./build-tool-images.sh latest
+          ./build-all-multiplatform.sh ${matrix.component}
+#          ./build-tool-images.sh latest
         env:
           DEBEZIUM_DOCKER_REGISTRY_PRIMARY_NAME: localhost:5500/debezium
           DEBEZIUM_DOCKER_REGISTRY_SECONDARY_NAME: localhost:5500/debeziumquay
