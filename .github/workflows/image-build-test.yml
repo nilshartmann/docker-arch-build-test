@@ -3,7 +3,13 @@ on:
   push:
 
 jobs:
-  setup-env:
+  build:
+    # Try to build as much as possible, even if a single job fails
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [ 'mongo', 'postgres', 'debezium' ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -20,17 +26,32 @@ jobs:
         with:
           driver-opts: |
             network=host
-  build:
-    needs: [setup-env]
-    strategy:
-      matrix:
-        component: [ 'mongo', 'postgres', 'debezium' ]
-    runs-on: ubuntu-latest
-    steps:
       - name: Run Scripts
-        run: |
-          ./build-all-multiplatform.sh ${{ matrix.component}}
-#          ./build-tool-images.sh latest
+        run: ./build-all-multiplatform.sh ${{ matrix.component }}
+        env:
+          DEBEZIUM_DOCKER_REGISTRY_PRIMARY_NAME: localhost:5500/debezium
+          DEBEZIUM_DOCKER_REGISTRY_SECONDARY_NAME: localhost:5500/debeziumquay
+  build-tool-images:
+    runs-on: ubuntu-latest
+    # Try to build as much as possible, even if a single job fails
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build Scripts
+        run: shellcheck build-*.sh
+      - name: Start local docker registry
+        run: docker run -d -p 5500:5000 --restart=always --name registry registry:2
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          driver-opts: |
+            network=host
+      - name: Run Scripts
+        run: ./build-tool-images.sh latest
         env:
           DEBEZIUM_DOCKER_REGISTRY_PRIMARY_NAME: localhost:5500/debezium
           DEBEZIUM_DOCKER_REGISTRY_SECONDARY_NAME: localhost:5500/debeziumquay
